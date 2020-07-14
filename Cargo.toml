@@ -1,0 +1,45 @@
+[package]
+name = "move-lsp"
+version = "0.1.0"
+authors = ["caojiafeng <funfriendcjf@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tower-lsp = "0.11"
+bastion = { version = "0.3", features = ["unstable"]}
+ra_vfs = "0.6.1"
+log = "0.4"
+tokio = {version = "0.2", features = ["full"]}
+serde = "1"
+serde_json = "1"
+parking_lot = "0.10"
+dashmap = "3.11"
+codespan = "0.8"
+
+move-lang = "0.0.1"
+move-ir-types = "0.1.0"
+
+[patch.crates-io]
+move-vm-runtime = {package = "move-vm-runtime", git = "https://github.com/move-hub/libra", branch = "movei"}
+move-vm-types = {package = "move-vm-types", git = "https://github.com/move-hub/libra", branch = "movei"}
+# move-vm-state = {package = "move-vm-state", git = "https://github.com/move-hub/libra", branch = "movei"}
+move-lang = {package = "move-lang", git = "https://github.com/move-hub/libra", branch = "movei"}
+move-ir-types = {package = "move-ir-types", git = "https://github.com/move-hub/libra", branch = "movei"}
+stdlib = {package="stdlib",  git = "https://github.com/move-hub/libra", branch = "movei"}
+compiled-stdlib = {package="compiled-stdlib",  git = "https://github.com/move-hub/libra", branch = "movei"}
+libra-types = {package="libra-types",  git = "https://github.com/move-hub/libra", branch = "movei"}
+vm = {package="vm",  git = "https://github.com/move-hub/libra", branch = "movei"}
+bytecode-verifier = {package="bytecode-verifier",  git = "https://github.com/move-hub/libra", branch = "movei"}
+move-core-types = {package="move-core-types",  git = "https://github.com/move-hub/libra", branch = "movei"}
+# libra-json-rpc = {package="libra-json-rpc",  git = "https://github.com/move-hub/libra", branch = "movei"}
+libra-crypto = {package="libra-crypto",  git = "https://github.com/move-hub/libra", branch = "movei"}
+# libra-wallet = {package="libra-wallet",  git = "https://github.com/move-hub/libra", branch = "movei"}
+resource-viewer = {package="resource-viewer",  git = "https://github.com/move-hub/libra", branch = "movei"}
+libra-state-view = {package="libra-state-view",  git = "https://github.com/move-hub/libra", branch = "movei"}
+vm-genesis = {package="vm-genesis",  git = "https://github.com/move-hub/libra", branch = "movei"}
+move-vm-natives = {package="move-vm-natives",  git = "https://github.com/move-hub/libra", branch = "movei"}
+datatest-stable = {package="datatest-stable",  git = "https://github.com/move-hub/libra", branch = "movei"}
+functional-tests = {package="functional-tests",  git = "https://github.com/move-hub/libra", branch = "movei"}
+language-e2e-tests = {package="language-e2e-tests",  git = "https://github.com/move-hub/libra", branch = "movei"}
