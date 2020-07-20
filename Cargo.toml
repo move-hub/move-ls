@@ -17,9 +17,19 @@ serde_json = "1"
 parking_lot = "0.10"
 dashmap = "3.11"
 codespan = "0.8"
+tree-sitter = "0.16"
+anyhow = "1"
+walkdir = "2.3"
+xi-rope = "0.3"
+
 
 move-lang = "0.0.1"
 move-ir-types = "0.1.0"
+
+move-core-types = "0.1.0"
+
+[build-dependencies]
+cc = "1.0"
 
 [patch.crates-io]
 move-vm-runtime = {package = "move-vm-runtime", git = "https://github.com/move-hub/libra", branch = "movei"}
@@ -43,3 +53,5 @@ move-vm-natives = {package="move-vm-natives",  git = "https://github.com/move-hu
 datatest-stable = {package="datatest-stable",  git = "https://github.com/move-hub/libra", branch = "movei"}
 functional-tests = {package="functional-tests",  git = "https://github.com/move-hub/libra", branch = "movei"}
 language-e2e-tests = {package="language-e2e-tests",  git = "https://github.com/move-hub/libra", branch = "movei"}
+
+tower-lsp = {package="tower-lsp",  git = "https://github.com/move-hub/tower-lsp", branch = "proposed-api"}

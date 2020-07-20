@@ -242,7 +242,7 @@ dependencies = [
 [[package]]
 name = "borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "libra-workspace-hack",
  "mirai-annotations",
@@ -257,7 +257,7 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 [[package]]
 name = "bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "codespan",
@@ -274,7 +274,7 @@ dependencies = [
 [[package]]
 name = "bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "borrow-graph",
@@ -287,6 +287,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bytecount"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be0fdd54b507df8f22012890aadd099979befdba27713c767993f8380112ca7c"
+
+[[package]]
 name = "byteorder"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -294,11 +300,10 @@ checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "bytes"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "118cf036fbb97d0816e3c34b2d7a1e8cfc60f68fcf63d550ddbe9bd5f59c213b"
+checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
 dependencies = [
- "loom",
  "serde",
 ]
 
@@ -523,7 +528,7 @@ dependencies = [
 [[package]]
 name = "datatest-stable"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "libra-workspace-hack",
  "regex",
@@ -844,19 +849,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "generator"
-version = "0.6.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "add72f17bb81521258fcc8a7a3245b1e184e916bfbe34f0ea89558f440df5c68"
-dependencies = [
- "cc",
- "libc",
- "log",
- "rustc_version",
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -981,7 +973,7 @@ dependencies = [
 [[package]]
 name = "ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "bytecode-source-map",
@@ -1000,7 +992,7 @@ dependencies = [
 [[package]]
 name = "ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "codespan",
@@ -1118,7 +1110,7 @@ checksum = "a9f8082297d534141b30c8d39e9b1773713ab50fdbe4ff30f750d063b3bfd701"
 [[package]]
 name = "libra-canonical-serialization"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "libra-workspace-hack",
  "serde",
@@ -1128,7 +1120,7 @@ dependencies = [
 [[package]]
 name = "libra-crypto"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1159,7 +1151,7 @@ dependencies = [
 [[package]]
 name = "libra-crypto-derive"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "libra-workspace-hack",
  "proc-macro2",
@@ -1170,20 +1162,23 @@ dependencies = [
 [[package]]
 name = "libra-network-address"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
+ "aes-gcm",
  "libra-canonical-serialization",
  "libra-crypto",
  "libra-workspace-hack",
+ "move-core-types",
  "serde",
  "serde_bytes",
+ "static_assertions",
  "thiserror",
 ]
 
 [[package]]
 name = "libra-nibble"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "libra-workspace-hack",
  "serde",
@@ -1192,7 +1187,7 @@ dependencies = [
 [[package]]
 name = "libra-types"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "bytes",
@@ -1218,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "libra-workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "bytes",
  "cc",
@@ -1253,23 +1248,12 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.8"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
+checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
 dependencies = [
  "cfg-if",
  "serde",
-]
-
-[[package]]
-name = "loom"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ecc775857611e1df29abba5c41355cdf540e7e9d4acfdf0f355eefee82330b7"
-dependencies = [
- "cfg-if",
- "generator",
- "scoped-tls",
 ]
 
 [[package]]
@@ -1398,7 +1382,7 @@ checksum = "54c239a898de56dc502ef97e1ab8fdbd1a7a0de9afc7d8412dd1f8cbda52ee55"
 [[package]]
 name = "move-core-types"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "hex",
@@ -1417,7 +1401,7 @@ dependencies = [
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "codespan",
@@ -1432,7 +1416,7 @@ dependencies = [
 [[package]]
 name = "move-lang"
 version = "0.0.1"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "borrow-graph",
@@ -1460,10 +1444,13 @@ dependencies = [
 name = "move-lsp"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bastion",
+ "cc",
  "codespan",
  "dashmap",
  "log",
+ "move-core-types",
  "move-ir-types",
  "move-lang",
  "parking_lot",
@@ -1472,6 +1459,9 @@ dependencies = [
  "serde_json",
  "tokio",
  "tower-lsp",
+ "tree-sitter",
+ "walkdir",
+ "xi-rope",
 ]
 
 [[package]]
@@ -1544,7 +1534,7 @@ dependencies = [
 [[package]]
 name = "num-variants"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "libra-workspace-hack",
  "proc-macro2",
@@ -1868,15 +1858,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
-name = "rustc_version"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
-dependencies = [
- "semver",
-]
-
-[[package]]
 name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1892,31 +1873,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "scoped-tls"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "332ffa32bf586782a3efaeb58f127980944bbc8c4d6913a86107ac2a5ab24b28"
-
-[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
-
-[[package]]
-name = "semver"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
-dependencies = [
- "semver-parser",
-]
-
-[[package]]
-name = "semver-parser"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
@@ -2095,9 +2055,9 @@ checksum = "502d53007c02d7605a05df1c1a73ee436952781653da5d0bf57ad608f66932c1"
 
 [[package]]
 name = "syn"
-version = "1.0.33"
+version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8d5d96e8cbb005d6959f119f773bfaebb5684296108fb32600c00cde305b2cd"
+checksum = "936cae2873c940d92e697597c5eee105fb570cd5689c695806f672883653349b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2260,8 +2220,7 @@ dependencies = [
 [[package]]
 name = "tower-lsp"
 version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec8a96bbd107e83d4558bcd881fd8fc8eda7dbbd3ad2f013829be4aa7948d8f0"
+source = "git+https://github.com/move-hub/tower-lsp?branch=proposed-api#156d3b58fc7636f4b21f6f259d85d4bcc0c8c3c6"
 dependencies = [
  "async-trait",
  "bytes",
@@ -2284,6 +2243,16 @@ name = "tower-service"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e987b6bf443f4b5b3b6f38704195592cca41c5bb7aedd3c3693c7081f8289860"
+
+[[package]]
+name = "tree-sitter"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1df33680edb07e4fb76edcbdd9c7b849b96709fb878afcf0ada678d6bda167af"
+dependencies = [
+ "cc",
+ "regex",
+]
 
 [[package]]
 name = "typenum"
@@ -2373,7 +2342,7 @@ checksum = "b5a972e5669d67ba988ce3dc826706fb0a8b01471c088cb0b6110b805cc36aed"
 [[package]]
 name = "vm"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 dependencies = [
  "anyhow",
  "libra-crypto",
@@ -2466,6 +2435,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "xi-rope"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1266c6612194a86462905372bc7bbc9887e3f3826da6b82ea4a35492bc65d5a"
+dependencies = [
+ "bytecount",
+ "memchr",
+ "regex",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "zeroize"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2489,49 +2470,49 @@ dependencies = [
 [[patch.unused]]
 name = "compiled-stdlib"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "functional-tests"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "language-e2e-tests"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "libra-state-view"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "move-vm-natives"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "stdlib"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"
 
 [[patch.unused]]
 name = "vm-genesis"
 version = "0.1.0"
-source = "git+https://github.com/move-hub/libra?branch=movei#e46ff1f0a6268d003737cc37fd29ce7119f26450"
+source = "git+https://github.com/move-hub/libra?branch=movei#3bd923896ea4b4936f53d5dcc07a11e65006e5e1"

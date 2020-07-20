@@ -1,0 +1,3 @@
+[submodule "tree-sitter-move"]
+	path = tree-sitter-move
+	url = https://github.com/move-hub/tree-sitter-move.git
