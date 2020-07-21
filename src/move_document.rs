@@ -1,16 +1,12 @@
 use super::tree_sitter_move::Parser;
-use crate::node_resolver::NodeResolver;
-use crate::tree_sitter_move::parser;
-use anyhow::bail;
-use anyhow::ensure;
-use anyhow::Result;
+use crate::{node_resolver::NodeResolver, tree_sitter_move::parser};
+use anyhow::{bail, ensure, Result};
 use parking_lot::RwLock;
 use serde::export::Formatter;
 use std::cell::Cell;
 use tower_lsp::lsp_types;
 use tree_sitter::{InputEdit, Point, Query, Tree};
-use xi_rope::rope::BaseMetric;
-use xi_rope::{Cursor, DeltaBuilder, Interval, Rope, RopeDelta};
+use xi_rope::{rope::BaseMetric, Cursor, DeltaBuilder, Interval, Rope, RopeDelta};
 
 pub struct MoveDocument {
     parser: Option<Parser>,
@@ -150,7 +146,7 @@ impl std::fmt::Display for MoveDocument {
 
 /// Transform lsp Position to offset.
 /// Notice: character of Position is char-indexed, not byte-indexed.
-fn position_to_offset(rope: &Rope, pos: lsp_types::Position) -> usize {
+pub fn position_to_offset(rope: &Rope, pos: lsp_types::Position) -> usize {
     let lsp_types::Position { line, character } = pos;
     let offset_of_line_start = rope.offset_of_line(line as usize);
 
@@ -167,7 +163,7 @@ fn position_to_offset(rope: &Rope, pos: lsp_types::Position) -> usize {
     }
 }
 
-fn get_chunk(rope: &Rope, offset: usize) -> &str {
+pub fn get_chunk(rope: &Rope, offset: usize) -> &str {
     let c = Cursor::new(&rope, offset);
     if let Some((node, idx)) = c.get_leaf() {
         &node[idx..]

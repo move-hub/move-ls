@@ -1,10 +1,11 @@
 use codespan::{FileId, Files};
 use move_ir_types::location::Loc;
 use move_lang::errors::{Error, ErrorSlice, Errors, FilesSourceText, HashableError};
-use std::collections::hash_map::RandomState;
-use std::collections::{HashMap, HashSet};
-use tower_lsp::lsp_types;
-use tower_lsp::lsp_types::{Diagnostic, DiagnosticRelatedInformation, Range};
+use std::collections::{hash_map::RandomState, HashMap, HashSet};
+use tower_lsp::{
+    lsp_types,
+    lsp_types::{Diagnostic, DiagnosticRelatedInformation, Range},
+};
 
 #[derive(Clone, Debug)]
 pub struct DiagnosticInfo {
@@ -64,11 +65,7 @@ fn render_errors(
     diagnostics
 }
 
-fn render_error(
-    files: &Files<String>,
-    file_mapping: &FileMapping,
-    mut error: Error,
-) -> DiagnosticInfo {
+fn render_error(files: &Files<String>, file_mapping: &FileMapping, error: Error) -> DiagnosticInfo {
     let mut spans: Vec<_> = error
         .into_iter()
         .map(|e| Label {

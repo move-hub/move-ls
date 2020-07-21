@@ -1,5 +1,7 @@
-use crate::node_resolver::NodeResolver;
-use crate::tree_sitter_move::{language, parser};
+use crate::{
+    node_resolver::NodeResolver,
+    tree_sitter_move::{language, parser},
+};
 use std::fs::File;
 
 #[test]

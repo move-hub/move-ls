@@ -7,7 +7,19 @@ pub mod module_resolver;
 pub struct NodeResolver;
 
 pub enum Resolved {
-    Module { name: Range, address: Option<Range> },
+    Module {
+        name: Range,
+        address: Option<Range>,
+    },
+    StructIdentifier {
+        name: Range,
+        module: Option<Range>,
+    },
+    FunctionIdentifier {
+        name: Range,
+        module: Option<Range>,
+        address: Option<Range>,
+    },
 }
 
 impl NodeResolver {
