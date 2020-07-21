@@ -7,8 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tower-lsp = "0.11"
-bastion = { version = "0.3", features = ["unstable"]}
+tower-lsp = "0.11.0"
+bastion = { version = "0.4"}
 ra_vfs = "0.6.1"
 log = "0.4"
 tokio = {version = "0.2", features = ["full"]}
@@ -21,15 +21,22 @@ tree-sitter = "0.16"
 anyhow = "1"
 walkdir = "2.3"
 xi-rope = "0.3"
+salsa = "0.15"
+futures = "0.3"
+agnostik = "0.1.4"
+nuclei = "0.1.1"
+riker = "0.4"
 
 
 move-lang = "0.0.1"
 move-ir-types = "0.1.0"
-
 move-core-types = "0.1.0"
+env_logger = "0.7.1"
+
 
 [build-dependencies]
 cc = "1.0"
+built = {vesion = "0.4", features=["git2", "chrono"]}
 
 [patch.crates-io]
 move-vm-runtime = {package = "move-vm-runtime", git = "https://github.com/move-hub/libra", branch = "movei"}
