@@ -149,12 +149,12 @@ impl MoveLanguageServer {
 
         let stdlib_files = new_config
             .stdlib_folder
-            .map(|p| find_move_file(p))
+            .map(find_move_file)
             .unwrap_or_default();
         let module_files: Vec<_> = new_config
             .modules_folders
             .into_iter()
-            .flat_map(|p| find_move_file(p))
+            .flat_map(find_move_file)
             .collect();
 
         self.db.set_stdlib_files(stdlib_files.clone());

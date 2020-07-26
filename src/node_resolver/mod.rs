@@ -31,10 +31,9 @@ impl NodeResolver {
 
                 let address = if n.parent().map(|p| p.kind() == "module_access").is_some() {
                     let prev_sibling = n.prev_named_sibling();
-                    let address_range = prev_sibling
+                    prev_sibling
                         .filter(|s| s.kind() == "address_literal")
-                        .map(|s| s.range());
-                    address_range
+                        .map(|s| s.range())
                 } else {
                     None
                 };
@@ -51,7 +50,7 @@ impl NodeResolver {
     pub fn resolve_use(node: &tree_sitter::Node) -> Vec<UseInfo> {
         let use_query = Query::new(language(), USE_QUERY).unwrap();
         let mut cursor = QueryCursor::new();
-        let matched = cursor.matches(&use_query, node.clone(), |n| "");
+        let matched = cursor.matches(&use_query, *node, |n| "");
 
         let mut uses = vec![];
         for mat in matched {
