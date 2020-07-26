@@ -1,11 +1,8 @@
 use codespan::{FileId, Files};
 use move_ir_types::location::Loc;
 use move_lang::errors::{Error, ErrorSlice, Errors, FilesSourceText, HashableError};
-use std::collections::{hash_map::RandomState, HashMap, HashSet};
-use tower_lsp::{
-    lsp_types,
-    lsp_types::{Diagnostic, DiagnosticRelatedInformation, Range},
-};
+use std::collections::{HashMap, HashSet};
+use tower_lsp::{lsp_types, lsp_types::Range};
 
 #[derive(Clone, Debug)]
 pub struct DiagnosticInfo {

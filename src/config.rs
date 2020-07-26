@@ -54,7 +54,7 @@ mod tests {
     }
         "#;
 
-        let config: ProjectConfig = serde_json::from_str(source).unwrap();
+        let _config: ProjectConfig = serde_json::from_str(source).unwrap();
 
         let source = r#"
     {

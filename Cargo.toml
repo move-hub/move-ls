@@ -36,29 +36,18 @@ env_logger = "0.7.1"
 
 [build-dependencies]
 cc = "1.0"
-built = {vesion = "0.4", features=["git2", "chrono"]}
+built = {version = "0.4", features=["git2", "chrono"]}
 
 [patch.crates-io]
-move-vm-runtime = {package = "move-vm-runtime", git = "https://github.com/move-hub/libra", branch = "movei"}
-move-vm-types = {package = "move-vm-types", git = "https://github.com/move-hub/libra", branch = "movei"}
 # move-vm-state = {package = "move-vm-state", git = "https://github.com/move-hub/libra", branch = "movei"}
 move-lang = {package = "move-lang", git = "https://github.com/move-hub/libra", branch = "movei"}
 move-ir-types = {package = "move-ir-types", git = "https://github.com/move-hub/libra", branch = "movei"}
-stdlib = {package="stdlib",  git = "https://github.com/move-hub/libra", branch = "movei"}
-compiled-stdlib = {package="compiled-stdlib",  git = "https://github.com/move-hub/libra", branch = "movei"}
 libra-types = {package="libra-types",  git = "https://github.com/move-hub/libra", branch = "movei"}
 vm = {package="vm",  git = "https://github.com/move-hub/libra", branch = "movei"}
 bytecode-verifier = {package="bytecode-verifier",  git = "https://github.com/move-hub/libra", branch = "movei"}
 move-core-types = {package="move-core-types",  git = "https://github.com/move-hub/libra", branch = "movei"}
-# libra-json-rpc = {package="libra-json-rpc",  git = "https://github.com/move-hub/libra", branch = "movei"}
 libra-crypto = {package="libra-crypto",  git = "https://github.com/move-hub/libra", branch = "movei"}
-# libra-wallet = {package="libra-wallet",  git = "https://github.com/move-hub/libra", branch = "movei"}
-resource-viewer = {package="resource-viewer",  git = "https://github.com/move-hub/libra", branch = "movei"}
-libra-state-view = {package="libra-state-view",  git = "https://github.com/move-hub/libra", branch = "movei"}
-vm-genesis = {package="vm-genesis",  git = "https://github.com/move-hub/libra", branch = "movei"}
-move-vm-natives = {package="move-vm-natives",  git = "https://github.com/move-hub/libra", branch = "movei"}
+# move-vm-natives = {package="move-vm-natives",  git = "https://github.com/move-hub/libra", branch = "movei"}
 datatest-stable = {package="datatest-stable",  git = "https://github.com/move-hub/libra", branch = "movei"}
-functional-tests = {package="functional-tests",  git = "https://github.com/move-hub/libra", branch = "movei"}
-language-e2e-tests = {package="language-e2e-tests",  git = "https://github.com/move-hub/libra", branch = "movei"}
 
 tower-lsp = {package="tower-lsp",  git = "https://github.com/move-hub/tower-lsp", branch = "proposed-api"}

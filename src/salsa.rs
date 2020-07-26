@@ -3,7 +3,6 @@ use crate::{
     node_resolver::NodeResolver,
     tree_sitter_move::parser,
 };
-use move_core_types::account_address::AccountAddress;
 use move_lang::{
     compiled_unit::CompiledUnit,
     errors::{Errors, FilesSourceText},
@@ -11,15 +10,8 @@ use move_lang::{
     shared::Address,
     CommentMap, MatchedFileCommentMap,
 };
-use salsa::Database;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-use tower_lsp::{
-    lsp_types,
-    lsp_types::{Location, Position},
-};
+use std::path::PathBuf;
+use tower_lsp::{lsp_types, lsp_types::Location};
 use xi_rope::Rope;
 
 #[salsa::query_group(ConfigStorage)]
@@ -79,7 +71,7 @@ impl RootDatabase {
     ) {
         let (sources, parsed_program) = self.parse_file(file_path.clone());
 
-        let checked = move_lang::check_program(parsed_program.map(|(p, c)| p), self.sender());
+        let checked = move_lang::check_program(parsed_program.map(|(p, _c)| p), self.sender());
         (sources, checked)
     }
 
@@ -123,7 +115,7 @@ impl RootDatabase {
                     errors.append(&mut e);
                 }
                 Ok((defs, comments)) => {
-                    lib_definitions.extend(defs);
+                    source_definitions.extend(defs);
                     source_comments.insert(self.leak_str(source.clone()), comments);
                 }
             }

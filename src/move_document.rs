@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use super::tree_sitter_move::Parser;
 use crate::{node_resolver::NodeResolver, tree_sitter_move::parser};
 use anyhow::{bail, ensure, Result};
