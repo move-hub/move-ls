@@ -54,9 +54,10 @@ impl salsa::Database for RootDatabase {}
 impl RootDatabase {
     pub fn compile_file(
         &self,
+        sender: Option<Address>,
         file_path: PathBuf,
     ) -> (FilesSourceText, Result<Vec<CompiledUnit>, Errors>) {
-        let (sources, cfg_program) = self.check_file(file_path);
+        let (sources, cfg_program) = self.check_file(sender, file_path);
         let compiled_result =
             cfg_program.and_then(|p| move_lang::to_bytecode::translate::program(p));
         (sources, compiled_result)
@@ -64,14 +65,15 @@ impl RootDatabase {
 
     pub fn check_file(
         &self,
+        sender: Option<Address>,
         file_path: PathBuf,
     ) -> (
         FilesSourceText,
         Result<move_lang::cfgir::ast::Program, Errors>,
     ) {
         let (sources, parsed_program) = self.parse_file(file_path.clone());
-
-        let checked = move_lang::check_program(parsed_program.map(|(p, _c)| p), self.sender());
+        let sender = sender.or_else(|| self.sender());
+        let checked = move_lang::check_program(parsed_program.map(|(p, _c)| p), sender);
         (sources, checked)
     }
 
