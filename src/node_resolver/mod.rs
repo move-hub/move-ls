@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::tree_sitter_move::language;
 use tree_sitter::{Query, QueryCursor, Range};
 

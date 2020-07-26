@@ -1,8 +1,4 @@
-use crate::{
-    node_resolver::NodeResolver,
-    tree_sitter_move::{language, parser},
-};
-use std::fs::File;
+use crate::{node_resolver::NodeResolver, tree_sitter_move::parser};
 
 #[test]
 pub fn test_resolve_use() {

@@ -1,51 +1,30 @@
 use crate::{
     config::ProjectConfig,
     error_diagnostic::{to_diagnostics, DiagnosticInfo},
-    move_document::MoveDocument,
     salsa::{Config, RootDatabase, TextSource},
     utils::find_move_file,
 };
 use anyhow::{bail, Result};
 use bastion::prelude::*;
-use codespan;
 use dashmap::DashMap;
-use futures::{channel::mpsc, StreamExt};
-use move_core_types::account_address::AccountAddress;
-use move_ir_types::location::Loc;
-use move_lang::{
-    errors::{ErrorSlice, Errors, FilesSourceText, HashableError},
-    find_move_filenames,
-    shared::Address,
-};
-use parking_lot::RwLock;
-use salsa::Database;
-use serde::{export::fmt::Display, Deserialize, Serialize};
+use move_lang::errors::{Errors, FilesSourceText};
+use serde::{Deserialize, Serialize};
 use serde_json as json;
 use serde_json::Value;
-use std::{
-    collections::{HashMap, HashSet},
-    path::{Path, PathBuf},
-    str::FromStr,
-    sync::Arc,
-};
+use std::{path::PathBuf, str::FromStr};
 
 use tower_lsp::{
-    jsonrpc,
-    jsonrpc::Error,
-    lsp_types,
+    jsonrpc, lsp_types,
     lsp_types::{
-        notification::Progress,
-        request::{GotoDeclarationParams, GotoDeclarationResponse},
-        ClientCapabilities, ConfigurationItem, Diagnostic, DiagnosticRelatedInformation,
+        notification::Progress, ConfigurationItem, Diagnostic, DiagnosticRelatedInformation,
         DiagnosticSeverity, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandOptions, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
-        InitializeParams, InitializeResult, InitializedParams, Location, MessageType,
-        ProgressParams, ProgressParamsValue, ProgressToken, SaveOptions, ServerCapabilities,
-        ServerInfo, TextDocumentItem, TextDocumentSyncCapability, TextDocumentSyncKind,
-        TextDocumentSyncOptions, TraceOption, Url, WorkDoneProgress, WorkDoneProgressBegin,
-        WorkDoneProgressEnd, WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceCapability,
-        WorkspaceFolderCapability,
+        ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, Location, ProgressParams, ProgressParamsValue, SaveOptions,
+        ServerCapabilities, ServerInfo, TextDocumentItem, TextDocumentSyncCapability,
+        TextDocumentSyncKind, TextDocumentSyncOptions, Url, WorkDoneProgress,
+        WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressOptions,
+        WorkDoneProgressParams, WorkspaceCapability, WorkspaceFolderCapability,
     },
     Client, LanguageServer,
 };
@@ -113,14 +92,8 @@ impl MoveLanguageServer {
         params: InitializeParams,
     ) -> Result<InitializeResult> {
         let InitializeParams {
-            process_id,
-            root_path: _,
-            root_uri,
             initialization_options,
-            capabilities,
-            trace,
-            workspace_folders,
-            client_info,
+            ..
         } = params;
 
         self.client = Some(client);
@@ -212,7 +185,7 @@ impl MoveLanguageServer {
         let DidOpenTextDocumentParams {
             text_document:
                 TextDocumentItem {
-                    language_id,
+                    language_id: _,
                     text,
                     version,
                     uri,
@@ -394,7 +367,7 @@ impl LanguageServer for FrontEnd {
             .map_err(|e| jsonrpc::Error::invalid_params_with_details("fail to initialize", e))
     }
 
-    async fn initialized(&self, client: &Client, _: InitializedParams) {
+    async fn initialized(&self, _client: &Client, _: InitializedParams) {
         info!("move language server initialized");
     }
 
@@ -496,7 +469,7 @@ impl LanguageServer for FrontEnd {
             _ => Ok(None),
         }
     }
-    async fn did_open(&self, client: &Client, params: DidOpenTextDocumentParams) {
+    async fn did_open(&self, _client: &Client, params: DidOpenTextDocumentParams) {
         if params.text_document.language_id.as_str() != LANGUAGE_ID {
             return;
         }
@@ -504,15 +477,15 @@ impl LanguageServer for FrontEnd {
         self.try_tell(params);
     }
 
-    async fn did_change(&self, client: &Client, params: DidChangeTextDocumentParams) {
+    async fn did_change(&self, _client: &Client, params: DidChangeTextDocumentParams) {
         self.try_tell(params);
     }
 
-    async fn did_save(&self, client: &Client, params: DidSaveTextDocumentParams) {
+    async fn did_save(&self, _client: &Client, params: DidSaveTextDocumentParams) {
         self.try_tell(params);
     }
 
-    async fn did_close(&self, client: &Client, params: DidCloseTextDocumentParams) {
+    async fn did_close(&self, _client: &Client, params: DidCloseTextDocumentParams) {
         self.try_tell(params);
     }
 
