@@ -13,6 +13,9 @@ use serde_json as json;
 use serde_json::Value;
 use std::{path::PathBuf, str::FromStr};
 
+use move_core_types::account_address::AccountAddress;
+use move_lang::shared::Address;
+use std::convert::TryFrom;
 use tower_lsp::{
     jsonrpc, lsp_types,
     lsp_types::{
@@ -224,7 +227,7 @@ impl MoveLanguageServer {
         let DidSaveTextDocumentParams { text_document } = param;
         let source_path = text_document.uri.to_file_path().unwrap();
 
-        let (sources, result) = self.db.check_file(source_path);
+        let (sources, result) = self.db.check_file(None, source_path);
 
         let errors = result.err().unwrap_or_default();
         self.publish_diagnostics(sources, errors);
@@ -280,11 +283,14 @@ impl MoveLanguageServer {
         }
     }
 
-    fn do_compilation(&self, action: CompilationAction) -> Result<(), String> {
-        let CompilationAction { file, out_dir } = action;
+    fn do_compilation(&mut self, args: CompilationAction) -> Result<(), String> {
+        let CompilationAction {
+            sender,
+            args: CompilationArgs { file, out_dir },
+        } = args;
 
         if let Ok(p) = file.to_file_path() {
-            match self.db.compile_file(p) {
+            match self.db.compile_file(sender, p) {
                 (s, Ok(u)) => move_lang::output_compiled_units(
                     true,
                     s,
@@ -303,8 +309,14 @@ impl MoveLanguageServer {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct CompilationAction {
+    sender: Option<Address>,
+    args: CompilationArgs,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct CompilationArgs {
     file: Url,
     out_dir: PathBuf,
 }
@@ -425,7 +437,21 @@ impl LanguageServer for FrontEnd {
                     jsonrpc::Error::invalid_params("no arguments found for compile command")
                 })?;
 
-                let arg: CompilationAction = serde_json::from_value(arg).map_err(|e| {
+                let sender_opt = match arguments
+                    .pop()
+                    .as_ref()
+                    .and_then(|s| s.as_str())
+                    .map(|s| AccountAddress::from_hex_literal(s))
+                    .transpose()
+                {
+                    Err(e) => {
+                        let err_msg = format!("invalid sender address, {}", e);
+                        return Ok(Some(Value::String(err_msg)));
+                    }
+                    Ok(sender) => sender.map(|s| Address::try_from(s.as_ref()).unwrap()),
+                };
+
+                let args: CompilationArgs = serde_json::from_value(arg).map_err(|e| {
                     jsonrpc::Error::invalid_params_with_details(
                         "fail to parse compile arguments",
                         e,
@@ -446,7 +472,10 @@ impl LanguageServer for FrontEnd {
                 }
 
                 let result = self
-                    .ask::<_, Result<(), String>>(arg)
+                    .ask::<_, Result<(), String>>(CompilationAction {
+                        sender: sender_opt,
+                        args,
+                    })
                     .await
                     .map_err(|_| jsonrpc::Error::internal_error())?;
 
