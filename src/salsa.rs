@@ -58,8 +58,7 @@ impl RootDatabase {
         file_path: PathBuf,
     ) -> (FilesSourceText, Result<Vec<CompiledUnit>, Errors>) {
         let (sources, cfg_program) = self.check_file(sender, file_path);
-        let compiled_result =
-            cfg_program.and_then(move_lang::to_bytecode::translate::program);
+        let compiled_result = cfg_program.and_then(move_lang::to_bytecode::translate::program);
         (sources, compiled_result)
     }
 
