@@ -59,7 +59,7 @@ impl RootDatabase {
     ) -> (FilesSourceText, Result<Vec<CompiledUnit>, Errors>) {
         let (sources, cfg_program) = self.check_file(sender, file_path);
         let compiled_result =
-            cfg_program.and_then(|p| move_lang::to_bytecode::translate::program(p));
+            cfg_program.and_then(move_lang::to_bytecode::translate::program);
         (sources, compiled_result)
     }
 
@@ -71,7 +71,7 @@ impl RootDatabase {
         FilesSourceText,
         Result<move_lang::cfgir::ast::Program, Errors>,
     ) {
-        let (sources, parsed_program) = self.parse_file(file_path.clone());
+        let (sources, parsed_program) = self.parse_file(file_path);
         let sender = sender.or_else(|| self.sender());
         let checked = move_lang::check_program(parsed_program.map(|(p, _c)| p), sender);
         (sources, checked)

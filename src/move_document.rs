@@ -116,7 +116,9 @@ impl MoveDocument {
     }
 
     pub fn reset_with(&mut self, text: impl AsRef<str>) -> Result<()> {
-        self.parser.as_mut().map(|p| p.reset());
+        if let Some(p) = self.parser.as_mut() {
+            p.reset()
+        }
         self.rope = Rope::from(text.as_ref());
         self.reparse()
     }
@@ -156,10 +158,7 @@ pub fn position_to_offset(rope: &Rope, pos: lsp_types::Position) -> usize {
         offset_of_line_start
     } else {
         let mut cursor = Cursor::new(rope, offset_of_line_start);
-        let pos = cursor
-            .iter::<BaseMetric>()
-            .skip(character as usize - 1)
-            .next();
+        let pos = cursor.iter::<BaseMetric>().nth(character as usize - 1);
 
         pos.unwrap()
     }
@@ -197,12 +196,34 @@ mod tests {
 
         let mut char_index = text.char_indices();
         let _ = char_index.next();
-        while let Some((idx, char)) = char_index.next() {
+        for (idx, char) in char_index {
             let pos = iter.next();
             assert_eq!(pos, Some(idx));
         }
         let last = iter.next();
         assert!(last.is_some());
+
+        let text = "ss\nss";
+        let rope = Rope::from(text);
+        for (pos, expected_offset) in vec![
+            (
+                lsp_types::Position {
+                    line: 1,
+                    character: 0,
+                },
+                3,
+            ),
+            (
+                lsp_types::Position {
+                    line: 1,
+                    character: 1,
+                },
+                4,
+            ),
+        ] {
+            let offset = position_to_offset(&rope, pos);
+            assert_eq!(offset, expected_offset);
+        }
     }
 
     #[test]
@@ -220,7 +241,7 @@ mod tests {
         let mut doc = MoveDocument::new(1, "module Abc {}").unwrap();
         let range = Range::new(Position::new(0, 8), Position::new(0, 9));
         let new_text = "≤".to_string();
-        doc.edit(range, new_text.clone());
+        doc.edit(range, new_text);
 
         assert_eq!(format!("{}", &doc), "module A≤c {}");
         let tree_node = doc.tree.root_node();

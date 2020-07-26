@@ -25,7 +25,7 @@ where
                 .map(|a| Address::try_from(a.as_ref()).unwrap())
         })
         .transpose()
-        .map_err(|err| D::Error::custom(err))
+        .map_err(D::Error::custom)
 }
 fn serialize_address<S>(
     addr: &Option<Address>,

@@ -1,7 +1,6 @@
 use bastion::Bastion;
 use move_lsp::lsp_server::{FrontEnd, MoveLanguageServer};
 
-use tokio;
 use tower_lsp::{LspService, Server};
 
 pub mod built_info {
@@ -55,12 +54,11 @@ fn main() {
             })
         })
         .unwrap();
-    let backend_ref_clone = backend_ref.clone();
 
     // start server
 
     let join_handle = rt.spawn(async {
-        let lsp_service = FrontEnd::new(backend_ref_clone);
+        let lsp_service = FrontEnd::new(backend_ref);
         let (service, msg_stream) = LspService::new(lsp_service);
         let stdin = tokio::io::stdin();
         let stdout = tokio::io::stdout();
