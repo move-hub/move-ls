@@ -26,7 +26,7 @@ pub fn parser() -> Parser {
 
 // TODO: make it const.
 pub static NODE_TYPES: Lazy<Vec<DataType>> = Lazy::new(|| {
-    let node_types = include_str!("../tree-sitter-move/src/node-types.json");
+    let node_types = include_str!("../../../tree-sitter-move/src/node-types.json");
     serde_json::from_str(node_types).unwrap()
 });
 

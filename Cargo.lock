@@ -1495,7 +1495,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "move-lsp"
+name = "move-language-server"
 version = "0.1.0"
 dependencies = [
  "agnostik",

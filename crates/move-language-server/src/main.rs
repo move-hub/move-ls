@@ -1,5 +1,5 @@
 use bastion::Bastion;
-use move_lsp::lsp_server::{FrontEnd, MoveLanguageServer};
+use move_language_server::lsp_server::{FrontEnd, MoveLanguageServer};
 
 use tower_lsp::{LspService, Server};
 
