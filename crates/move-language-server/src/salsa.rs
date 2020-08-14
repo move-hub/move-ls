@@ -156,7 +156,7 @@ fn goto_definition(
     let text = db.source_text(db.leak_str(doc));
     let rope = Rope::from(text.as_str());
     let tree = parser().parse_with(&mut |offset, _pos| get_chunk(&rope, offset), None)?;
-    let offset = position_to_offset(&rope, pos);
+    let offset = position_to_offset(&rope, pos)?;
     let leaf = tree.root_node().descendant_for_byte_range(offset, offset)?;
     let resolved_result = NodeResolver::resolve(&leaf, &tree.root_node())?;
 
