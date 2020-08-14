@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/move-language-server",
+    "crates/semantic-tree-sitter"
 ]
 
 [patch.crates-io]
