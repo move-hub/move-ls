@@ -1,13 +1,12 @@
-use bastion::Bastion;
-use move_language_server::lsp_server::{FrontEnd, MoveLanguageServer};
-
+use move_language_server::lsp_server::MoveLanguageServer;
 use tower_lsp::{LspService, Server};
 
 pub mod built_info {
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     log::info!(
@@ -31,42 +30,20 @@ fn main() {
     }
     log::info!("Starting language server");
 
-    let mut rt = tokio::runtime::Builder::new()
-        .threaded_scheduler()
-        .thread_name("towe_lsp_server_rt")
-        .build()
-        .unwrap();
-
-    let rt_handle = rt.handle().clone();
-    Bastion::start();
-    let supervisor = Bastion::supervisor(|sp| sp).unwrap();
-    let backend_ref = supervisor
-        .children(|ch| {
-            ch.with_exec(move |ctx| {
-                let rt_handle = rt_handle.clone();
-                async move {
-                    let mut server = MoveLanguageServer::new(rt_handle);
-                    loop {
-                        let msg = ctx.recv().await?;
-                        server.handle_msg(&ctx, msg).await?;
-                    }
-                }
-            })
-        })
-        .unwrap();
+    // let mut rt = tokio::runtime::Builder::new()
+    //     .threaded_scheduler()
+    //     .thread_name("towe_lsp_server_rt")
+    //     .build()
+    //     .unwrap();
+    //
+    // let rt_handle = rt.handle().clone();
 
     // start server
-
-    let join_handle = rt.spawn(async {
-        let lsp_service = FrontEnd::new(backend_ref);
-        let (service, msg_stream) = LspService::new(lsp_service);
-        let stdin = tokio::io::stdin();
-        let stdout = tokio::io::stdout();
-        Server::new(stdin, stdout)
-            .interleave(msg_stream)
-            .serve(service)
-            .await;
-    });
-    Bastion::block_until_stopped();
-    let _ = rt.block_on(join_handle).unwrap();
+    let (service, msg_stream) = LspService::new(|client| MoveLanguageServer::new(client));
+    let stdin = tokio::io::stdin();
+    let stdout = tokio::io::stdout();
+    Server::new(stdin, stdout)
+        .interleave(msg_stream)
+        .serve(service)
+        .await;
 }
