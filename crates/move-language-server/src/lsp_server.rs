@@ -1,6 +1,7 @@
 use crate::{
     config::ProjectConfig,
     error_diagnostic::{to_diagnostics, DiagnosticInfo},
+    move_document::MoveDocument,
     salsa::{Config, RootDatabase, TextSource},
     utils::find_move_file,
 };
@@ -213,7 +214,7 @@ impl LanguageServer for MoveLanguageServer {
 pub struct Inner {
     db: RootDatabase,
     config: ProjectConfig,
-    docs: DashMap<Url, i64>,
+    docs: DashMap<Url, MoveDocument>,
     client: Client,
 }
 
@@ -242,7 +243,7 @@ impl Inner {
                 text_document_sync: Some(TextDocumentSyncCapability::Options(
                     TextDocumentSyncOptions {
                         open_close: Some(true),
-                        change: Some(TextDocumentSyncKind::Full),
+                        change: Some(TextDocumentSyncKind::Incremental),
                         save: Some(lsp_types::TextDocumentSyncSaveOptions::SaveOptions(
                             SaveOptions {
                                 include_text: Some(false),
@@ -320,7 +321,8 @@ impl Inner {
                     uri,
                 },
         } = param;
-        self.docs.insert(uri.clone(), version);
+        let doc = MoveDocument::new(version as u64, text.as_str());
+        self.docs.insert(uri.clone(), doc);
 
         if let Ok(p) = uri.to_file_path() {
             self.db.set_source_text(self.db.leak_str(p), text);
@@ -330,16 +332,19 @@ impl Inner {
     fn handle_file_change(&mut self, param: DidChangeTextDocumentParams) {
         let DidChangeTextDocumentParams {
             text_document,
-            mut content_changes,
+            content_changes,
         } = param;
 
-        if let Some(v) = text_document.version {
-            self.docs.insert(text_document.uri.clone(), v);
-        }
+        if let Some(mut doc) = self.docs.get_mut(&text_document.uri) {
+            // incremental edit
+            let changes = content_changes
+                .into_iter()
+                .map(|change| (change.range.unwrap(), change.text));
+            doc.edit_many(text_document.version.unwrap() as u64, changes);
 
-        if let Ok(p) = text_document.uri.to_file_path() {
-            if let Some(s) = content_changes.pop() {
-                self.db.set_source_text(self.db.leak_str(p), s.text);
+            if let Ok(p) = text_document.uri.to_file_path() {
+                let new_text = doc.doc().rope().to_string();
+                self.db.set_source_text(self.db.leak_str(p), new_text);
             }
         }
     }
@@ -363,7 +368,7 @@ impl Inner {
         let mut diags = to_diagnostics(sources, errs);
 
         for f in self.docs.iter() {
-            let (doc, version) = (f.key(), *f.value());
+            let (doc, version) = (f.key(), f.doc().version());
 
             debug!("publish diagnostic for {}", doc.path());
 
