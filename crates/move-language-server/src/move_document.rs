@@ -7,7 +7,7 @@ use parking_lot::RwLock;
 use serde::export::Formatter;
 use std::cell::Cell;
 use tower_lsp::lsp_types;
-use tree_sitter::{InputEdit, Point, Query, Tree};
+use tree_sitter::{InputEdit, Node, Point, Query, Tree};
 use xi_rope::{
     rope::{BaseMetric, Utf16CodeUnitsMetric},
     Cursor, DeltaBuilder, Interval, LinesMetric, Rope, RopeDelta,
@@ -94,16 +94,14 @@ impl MoveDocument {
     pub fn doc(&self) -> &RopeDoc {
         &self.doc
     }
-    // pub fn resolve(&self, pos: lsp_types::Position) {
-    //     let offset = position_to_offset(&self.rope, pos).unwrap();
-    //     let leaf = self
-    //         .tree
-    //         .root_node()
-    //         .descendant_for_byte_range(offset, offset);
-    //     if let Some(n) = leaf {
-    //         NodeResolver::resolve(&n, &self.tree.root_node());
-    //     }
-    // }
+
+    pub fn resolve_to_leaf_node(&self, pos: lsp_types::Position) -> Option<Node> {
+        let offset = self.doc.to_offset(pos)?;
+        self.tree
+            .as_ref()?
+            .root_node()
+            .descendant_for_byte_range(offset, offset)
+    }
 
     /// The content changes describe single state changes to the document.
     /// So if there are two content changes c1 (at array index 0) and
@@ -281,6 +279,25 @@ mod tests {
             assert_eq!(next_line, Some(4));
             assert_eq!(c.next(), None);
         }
+    }
+
+    #[test]
+    fn test_position_resolve() {
+        let mut doc = MoveDocument::new(1, "module Abc {}");
+        let pos = Position::new(0, 0);
+        let node = doc.resolve_to_leaf_node(pos);
+        assert!(node.is_some());
+        let node = node.unwrap();
+        assert!(!node.is_named());
+        println!("kind: {}, range: {:?}", node.kind(), node.range());
+
+        let pos = Position::new(0, 9);
+        let node = doc.resolve_to_leaf_node(pos);
+        assert!(node.is_some());
+        let node = node.unwrap();
+        assert!(node.is_named());
+        assert_eq!("module_identifier", node.kind());
+        println!("kind: {}, range: {:?}", node.kind(), node.range());
     }
 
     #[test]
