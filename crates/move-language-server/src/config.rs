@@ -5,7 +5,6 @@ use std::{convert::TryFrom, path::PathBuf};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectConfig {
-    pub dialect: String,
     pub stdlib_folder: Option<PathBuf>,
     pub modules_folders: Vec<PathBuf>,
     #[serde(deserialize_with = "deserialize_address")]
@@ -82,6 +81,6 @@ mod tests {
         "#;
 
         let config: ProjectConfig = serde_json::from_str(source).unwrap();
-        assert_eq!(config.stdlib_folder, None);
+        assert!(config.stdlib_folder.is_some());
     }
 }

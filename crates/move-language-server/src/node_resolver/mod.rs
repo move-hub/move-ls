@@ -1,11 +1,15 @@
 #![allow(unused)]
-use crate::tree_sitter_move::language;
+use crate::{move_document::RopeDoc, salsa::RootDatabase, tree_sitter_move::language};
 use tree_sitter::{Query, QueryCursor, Range};
+use xi_rope::Rope;
 
 pub const USE_QUERY: &str = include_str!("../queries/use.scm");
 pub mod module_resolver;
 
-pub struct NodeResolver;
+pub struct NodeResolver {
+    rope: Rope,
+    db: RootDatabase,
+}
 
 pub enum Resolved {
     Module {
@@ -22,13 +26,16 @@ pub enum Resolved {
         address: Option<Range>,
     },
 }
+const MODULE_IDENTIFIER: &str = "module_identifier";
+const STRUCT_IDENTIFIER: &str = "struct_identifier";
+const FUNCTION_IDENTIFIER: &str = "function_identifier";
+const VARIABLE_IDENTIFIER: &str = "variable_identifier";
 
 impl NodeResolver {
     pub fn resolve(n: &tree_sitter::Node, root: &tree_sitter::Node) -> Option<Resolved> {
         match n.kind() {
-            "module_identifier" => {
+            MODULE_IDENTIFIER => {
                 let range = n.range();
-
                 let address = if n.parent().map(|p| p.kind() == "module_access").is_some() {
                     let prev_sibling = n.prev_named_sibling();
                     prev_sibling

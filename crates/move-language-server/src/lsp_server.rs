@@ -2,7 +2,7 @@ use crate::{
     config::ProjectConfig,
     error_diagnostic::{to_diagnostics, DiagnosticInfo},
     move_document::MoveDocument,
-    salsa::{Config, RootDatabase, TextSource},
+    salsa::{config_query::Config, RootDatabase},
     utils::find_move_file,
 };
 use anyhow::{bail, Result};
@@ -23,12 +23,13 @@ use tower_lsp::{
         notification::Progress, ConfigurationItem, Diagnostic, DiagnosticRelatedInformation,
         DiagnosticSeverity, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, Location, ProgressParams, ProgressParamsValue, SaveOptions,
-        ServerCapabilities, ServerInfo, TextDocumentItem, TextDocumentSyncCapability,
-        TextDocumentSyncKind, TextDocumentSyncOptions, Url, WorkDoneProgress,
-        WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressOptions,
-        WorkDoneProgressParams, WorkspaceCapability, WorkspaceFolderCapability,
+        ExecuteCommandOptions, ExecuteCommandParams, GotoDefinitionParams, GotoDefinitionResponse,
+        InitializeParams, InitializeResult, InitializedParams, Location, ProgressParams,
+        ProgressParamsValue, SaveOptions, ServerCapabilities, ServerInfo, TextDocumentItem,
+        TextDocumentPositionParams, TextDocumentSyncCapability, TextDocumentSyncKind,
+        TextDocumentSyncOptions, Url, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
+        WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceCapability,
+        WorkspaceFolderCapability,
     },
     Client, LanguageServer,
 };
@@ -195,6 +196,23 @@ impl LanguageServer for MoveLanguageServer {
         let mut guard = self.inner.lock().await;
         guard.handle_file_close(params);
     }
+    async fn goto_definition(
+        &self,
+        params: GotoDefinitionParams,
+    ) -> jsonrpc::Result<Option<GotoDefinitionResponse>> {
+        let GotoDefinitionParams {
+            text_document_position_params:
+                TextDocumentPositionParams {
+                    text_document: _,
+                    position: _,
+                },
+            work_done_progress_params: _,
+            partial_result_params: _,
+        } = params;
+
+        error!("Got a textDocument/definition request, but it is not implemented");
+        Err(jsonrpc::Error::method_not_found())
+    }
 
     // async fn goto_declaration(
     //     &self,
@@ -216,6 +234,15 @@ pub struct Inner {
     config: ProjectConfig,
     docs: DashMap<Url, MoveDocument>,
     client: Client,
+}
+
+fn _assert_object_safe() {
+    fn assert_send<T: Send>() {}
+    fn assert_sync<T: Sync>() {}
+    assert_send::<Inner>();
+    assert_send::<RootDatabase>();
+    assert_send::<MoveLanguageServer>();
+    assert_sync::<MoveLanguageServer>();
 }
 
 #[derive(Clone, Debug, Default)]
@@ -284,34 +311,38 @@ impl Inner {
             .flat_map(find_move_file)
             .collect();
 
-        self.db.set_stdlib_files(stdlib_files.clone());
-        self.db.set_module_files(module_files.clone());
-        self.db.set_sender(new_config.sender_address);
+        self.db
+            .set_stdlib_files_with_durability(stdlib_files.clone(), salsa::Durability::HIGH);
+        self.db
+            .set_module_files_with_durability(module_files.clone(), salsa::Durability::HIGH);
+        self.db
+            .set_sender_with_durability(new_config.sender_address, salsa::Durability::HIGH);
 
-        for f in stdlib_files {
-            match std::fs::read_to_string(f.as_path()) {
-                Ok(content) => {
-                    self.db.set_source_text(self.db.leak_str(f), content);
-                }
-                Err(e) => {
-                    error!("fail to read stdlib path: {}, {}", f.as_path().display(), e);
-                }
-            }
-        }
-
-        for f in module_files {
-            match std::fs::read_to_string(f.as_path()) {
-                Ok(content) => {
-                    self.db.set_source_text(self.db.leak_str(f), content);
-                }
-                Err(e) => {
-                    error!("fail to read module path: {}, {}", f.as_path().display(), e);
-                }
-            }
-        }
+        // for f in stdlib_files {
+        //     match std::fs::read_to_string(f.as_path()) {
+        //         Ok(content) => {
+        //             self.db.set_source_text(self.db.leak_str(f), content);
+        //         }
+        //         Err(e) => {
+        //             error!("fail to read stdlib path: {}, {}", f.as_path().display(), e);
+        //         }
+        //     }
+        // }
+        //
+        // for f in module_files {
+        //     match std::fs::read_to_string(f.as_path()) {
+        //         Ok(content) => {
+        //             self.db.set_source_text(self.db.leak_str(f), content);
+        //         }
+        //         Err(e) => {
+        //             error!("fail to read module path: {}, {}", f.as_path().display(), e);
+        //         }
+        //     }
+        // }
     }
 
     fn handle_file_open(&mut self, param: DidOpenTextDocumentParams) {
+        debug!("file opened: {:?}", &param);
         let DidOpenTextDocumentParams {
             text_document:
                 TextDocumentItem {
@@ -322,14 +353,14 @@ impl Inner {
                 },
         } = param;
         let doc = MoveDocument::new(version as u64, text.as_str());
-        self.docs.insert(uri.clone(), doc);
-
         if let Ok(p) = uri.to_file_path() {
-            self.db.set_source_text(self.db.leak_str(p), text);
+            self.db.update_source(p, doc.doc().rope().clone());
         }
+        self.docs.insert(uri.clone(), doc);
     }
 
     fn handle_file_change(&mut self, param: DidChangeTextDocumentParams) {
+        debug!("file changed: {:?}", &param);
         let DidChangeTextDocumentParams {
             text_document,
             content_changes,
@@ -341,20 +372,33 @@ impl Inner {
                 .into_iter()
                 .map(|change| (change.range.unwrap(), change.text));
             doc.edit_many(text_document.version.unwrap() as u64, changes);
-
+        }
+        if let Some(rope) = self
+            .docs
+            .get(&text_document.uri)
+            .map(|d| d.doc().rope().clone())
+        {
             if let Ok(p) = text_document.uri.to_file_path() {
-                let new_text = doc.doc().rope().to_string();
-                self.db.set_source_text(self.db.leak_str(p), new_text);
+                self.db.update_source(p.clone(), rope);
+                // recheck diagnostics
+                let (sources, result) = self.db.check_file(None, p);
+                let errors = result.err().unwrap_or_default();
+                self.publish_diagnostics(sources, errors);
             }
         }
     }
 
     fn handle_file_close(&mut self, param: DidCloseTextDocumentParams) {
+        debug!("file closed: {:?}", &param);
         let DidCloseTextDocumentParams { text_document } = param;
         self.docs.remove(&text_document.uri);
+        if let Ok(p) = text_document.uri.to_file_path() {
+            self.db.close_source(p);
+        }
     }
 
     fn handle_file_save(&mut self, param: DidSaveTextDocumentParams) {
+        debug!("file saved: {:?}", &param);
         let DidSaveTextDocumentParams { text_document } = param;
         let source_path = text_document.uri.to_file_path().unwrap();
 
