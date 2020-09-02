@@ -2,7 +2,7 @@ use crate::{
     config::ProjectConfig,
     error_diagnostic::{to_diagnostics, DiagnosticInfo},
     move_document::MoveDocument,
-    salsa::{config_query::Config, RootDatabase},
+    salsa::{config_query::Config, text_source_query::SourceReader, RootDatabase},
     utils::find_move_file,
 };
 use anyhow::{bail, Result};
@@ -20,15 +20,17 @@ use std::{convert::TryFrom, path::PathBuf, str::FromStr};
 use tower_lsp::{
     jsonrpc, lsp_types,
     lsp_types::{
-        notification::Progress, ConfigurationItem, Diagnostic, DiagnosticRelatedInformation,
-        DiagnosticSeverity, DidChangeConfigurationParams, DidChangeTextDocumentParams,
-        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandOptions, ExecuteCommandParams, GotoDefinitionParams, GotoDefinitionResponse,
-        InitializeParams, InitializeResult, InitializedParams, Location, ProgressParams,
-        ProgressParamsValue, SaveOptions, ServerCapabilities, ServerInfo, TextDocumentItem,
+        notification::{Notification, Progress},
+        ConfigurationItem, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
+        DidChangeConfigurationParams, DidChangeTextDocumentParams,
+        DidChangeWatchedFilesRegistrationOptions, DidCloseTextDocumentParams,
+        DidOpenTextDocumentParams, DidSaveTextDocumentParams, ExecuteCommandOptions,
+        ExecuteCommandParams, GotoDefinitionParams, GotoDefinitionResponse, InitializeParams,
+        InitializeResult, InitializedParams, Location, ProgressParams, ProgressParamsValue,
+        Registration, SaveOptions, ServerCapabilities, ServerInfo, TextDocumentItem,
         TextDocumentPositionParams, TextDocumentSyncCapability, TextDocumentSyncKind,
-        TextDocumentSyncOptions, Url, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
-        WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceCapability,
+        TextDocumentSyncOptions, Unregistration, Url, WorkDoneProgress, WorkDoneProgressBegin,
+        WorkDoneProgressEnd, WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceCapability,
         WorkspaceFolderCapability,
     },
     Client, LanguageServer,
@@ -46,6 +48,8 @@ impl MoveLanguageServer {
             config: ProjectConfig::default(),
             docs: Default::default(),
             client,
+            file_watch_registration: Default::default(),
+            client_capabilities: Default::default(),
         };
         Self {
             inner: Mutex::new(inner),
@@ -65,6 +69,8 @@ impl LanguageServer for MoveLanguageServer {
     }
 
     async fn initialized(&self, _: InitializedParams) {
+        let mut guard = self.inner.lock().await;
+        guard.register_file_watch().await;
         info!("move language server initialized");
     }
 
@@ -93,12 +99,19 @@ impl LanguageServer for MoveLanguageServer {
 
         match config {
             Err(e) => {
-                info!("Fetch client configuration failure: {:?}", e);
+                panic!("Fetch client configuration failure: {:?}", e);
             }
             Ok(c) => {
                 guard.handle_config_change(c);
+                guard.register_file_watch().await;
             }
         }
+    }
+
+    async fn did_change_watched_files(&self, params: lsp_types::DidChangeWatchedFilesParams) {
+        let lsp_types::DidChangeWatchedFilesParams { changes } = params;
+        let mut inner = self.inner.lock().await;
+        inner.handle_watched_files_change(changes);
     }
 
     async fn execute_command(
@@ -234,6 +247,8 @@ pub struct Inner {
     config: ProjectConfig,
     docs: DashMap<Url, MoveDocument>,
     client: Client,
+    file_watch_registration: uuid::Uuid,
+    client_capabilities: lsp_types::ClientCapabilities,
 }
 
 fn _assert_object_safe() {
@@ -252,8 +267,10 @@ impl Inner {
     async fn initialize(&mut self, params: InitializeParams) -> Result<InitializeResult> {
         let InitializeParams {
             initialization_options,
+            capabilities,
             ..
         } = params;
+        self.client_capabilities = capabilities;
 
         if let Some(initial_config) = initialization_options {
             let conf = serde_json::from_value(initial_config)
@@ -296,6 +313,61 @@ impl Inner {
         })
     }
 
+    async fn register_file_watch(&mut self) {
+        let inner = self;
+
+        // unregister old
+        if !inner.file_watch_registration.is_nil() {
+            inner
+                .client
+                .unregister_capability(vec![Unregistration {
+                    id: inner.file_watch_registration.to_string(),
+                    method: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_string(),
+                }])
+                .await
+                .expect("should unregister didChangeWatchedFiles");
+        }
+
+        let mut file_watchers = vec![];
+        if let Some(stdlib) = inner.config.stdlib_folder.as_ref() {
+            let w = lsp_types::FileSystemWatcher {
+                glob_pattern: stdlib.join("**/*.move").display().to_string(),
+                kind: Some(
+                    lsp_types::WatchKind::Create
+                        | lsp_types::WatchKind::Delete
+                        | lsp_types::WatchKind::Change,
+                ),
+            };
+            file_watchers.push(w);
+        }
+        for module_folder in inner.config.modules_folders.as_slice() {
+            let w = lsp_types::FileSystemWatcher {
+                glob_pattern: module_folder.join("**/*.move").display().to_string(),
+                kind: Some(lsp_types::WatchKind::Create | lsp_types::WatchKind::Delete),
+            };
+            file_watchers.push(w);
+        }
+
+        let registration_options = DidChangeWatchedFilesRegistrationOptions {
+            watchers: file_watchers,
+        };
+
+        let new_registration_id = uuid::Uuid::new_v5(
+            &uuid::Uuid::NAMESPACE_URL,
+            lsp_types::notification::DidChangeWatchedFiles::METHOD.as_bytes(),
+        );
+        inner.file_watch_registration = new_registration_id;
+        inner
+            .client
+            .register_capability(vec![Registration {
+                id: new_registration_id.to_string(),
+                method: lsp_types::notification::DidChangeWatchedFiles::METHOD.to_string(),
+                register_options: serde_json::to_value(registration_options).ok(),
+            }])
+            .await
+            .expect("should register didChangeWatchedFiles");
+    }
+
     fn handle_config_change(&mut self, new_config: ProjectConfig) {
         debug!("server config change to: {:?}", &new_config);
 
@@ -317,28 +389,62 @@ impl Inner {
             .set_module_files_with_durability(module_files.clone(), salsa::Durability::HIGH);
         self.db
             .set_sender_with_durability(new_config.sender_address, salsa::Durability::HIGH);
+    }
 
-        // for f in stdlib_files {
-        //     match std::fs::read_to_string(f.as_path()) {
-        //         Ok(content) => {
-        //             self.db.set_source_text(self.db.leak_str(f), content);
-        //         }
-        //         Err(e) => {
-        //             error!("fail to read stdlib path: {}, {}", f.as_path().display(), e);
-        //         }
-        //     }
-        // }
-        //
-        // for f in module_files {
-        //     match std::fs::read_to_string(f.as_path()) {
-        //         Ok(content) => {
-        //             self.db.set_source_text(self.db.leak_str(f), content);
-        //         }
-        //         Err(e) => {
-        //             error!("fail to read module path: {}, {}", f.as_path().display(), e);
-        //         }
-        //     }
-        // }
+    fn handle_watched_files_change(&mut self, changes: Vec<lsp_types::FileEvent>) {
+        let inner = self;
+        for lsp_types::FileEvent { uri, typ } in changes {
+            let fp = uri.to_file_path().expect("uri to be a file path");
+
+            let is_stdlib_file = inner
+                .config
+                .stdlib_folder
+                .as_ref()
+                .filter(|stdlib_folder| fp.starts_with(stdlib_folder))
+                .is_some();
+
+            if matches!(typ, lsp_types::FileChangeType::Created) {
+                inner.db.did_change(fp.as_path());
+                return;
+            }
+
+            let mut files = if is_stdlib_file {
+                inner.db.stdlib_files()
+            } else {
+                inner.db.module_files()
+            };
+            let mut files_updated = false;
+            match typ {
+                lsp_types::FileChangeType::Created => {
+                    if !files.contains(&fp) {
+                        files.push(fp);
+                        files_updated = true;
+                    }
+                }
+                lsp_types::FileChangeType::Deleted => {
+                    if let Some(idx) = files.iter().position(|x| x == &fp) {
+                        files.remove(idx);
+                        files_updated = true;
+                    }
+                }
+                lsp_types::FileChangeType::Changed => {}
+            }
+
+            if !files_updated {
+                return;
+            }
+
+            if is_stdlib_file {
+                inner
+                    .db
+                    .set_stdlib_files_with_durability(files.clone(), salsa::Durability::HIGH);
+            } else {
+                inner
+                    .db
+                    .set_module_files_with_durability(files.clone(), salsa::Durability::HIGH);
+            }
+            inner.diagnose_with_optional_file(None);
+        }
     }
 
     fn handle_file_open(&mut self, param: DidOpenTextDocumentParams) {
@@ -354,7 +460,8 @@ impl Inner {
         } = param;
         let doc = MoveDocument::new(version as u64, text.as_str());
         if let Ok(p) = uri.to_file_path() {
-            self.db.update_source(p, doc.doc().rope().clone());
+            self.db.update_source(p.clone(), doc.doc().rope().clone());
+            self.diagnose_with_optional_file(Some(p));
         }
         self.docs.insert(uri.clone(), doc);
     }
@@ -381,9 +488,7 @@ impl Inner {
             if let Ok(p) = text_document.uri.to_file_path() {
                 self.db.update_source(p.clone(), rope);
                 // recheck diagnostics
-                let (sources, result) = self.db.check_file(None, p);
-                let errors = result.err().unwrap_or_default();
-                self.publish_diagnostics(sources, errors);
+                self.diagnose_with_optional_file(Some(p));
             }
         }
     }
@@ -402,8 +507,14 @@ impl Inner {
         let DidSaveTextDocumentParams { text_document } = param;
         let source_path = text_document.uri.to_file_path().unwrap();
 
-        let (sources, result) = self.db.check_file(None, source_path);
+        self.diagnose_with_optional_file(Some(source_path));
+    }
 
+    fn diagnose_with_optional_file(&self, additional: Option<PathBuf>) {
+        let (sources, result) = match additional {
+            None => self.db.check_all(None),
+            Some(fp) => self.db.check_file(None, fp),
+        };
         let errors = result.err().unwrap_or_default();
         self.publish_diagnostics(sources, errors);
     }
