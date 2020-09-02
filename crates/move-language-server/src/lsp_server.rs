@@ -403,7 +403,7 @@ impl Inner {
                 .filter(|stdlib_folder| fp.starts_with(stdlib_folder))
                 .is_some();
 
-            if matches!(typ, lsp_types::FileChangeType::Created) {
+            if matches!(typ, lsp_types::FileChangeType::Changed) {
                 inner.db.did_change(fp.as_path());
                 return;
             }
@@ -437,11 +437,11 @@ impl Inner {
             if is_stdlib_file {
                 inner
                     .db
-                    .set_stdlib_files_with_durability(files.clone(), salsa::Durability::HIGH);
+                    .set_stdlib_files_with_durability(files, salsa::Durability::HIGH);
             } else {
                 inner
                     .db
-                    .set_module_files_with_durability(files.clone(), salsa::Durability::HIGH);
+                    .set_module_files_with_durability(files, salsa::Durability::HIGH);
             }
             inner.diagnose_with_optional_file(None);
         }
