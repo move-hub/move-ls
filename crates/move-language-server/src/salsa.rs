@@ -74,6 +74,20 @@ impl RootDatabase {
         (sources, compiled_result)
     }
 
+    // TODO: refactor this and check_file.
+    pub fn check_all(
+        &self,
+        sender: Option<Address>,
+    ) -> (
+        FilesSourceText,
+        Result<move_lang::cfgir::ast::Program, Errors>,
+    ) {
+        let (sources, parsed_program) = self.parse_file(None);
+        let sender = sender.or_else(|| self.sender());
+        let checked = move_lang::check_program(parsed_program.map(|(p, _c)| p), sender);
+        (sources, checked)
+    }
+
     pub fn check_file(
         &self,
         sender: Option<Address>,
@@ -82,7 +96,7 @@ impl RootDatabase {
         FilesSourceText,
         Result<move_lang::cfgir::ast::Program, Errors>,
     ) {
-        let (sources, parsed_program) = self.parse_file(file_path);
+        let (sources, parsed_program) = self.parse_file(Some(file_path));
         let sender = sender.or_else(|| self.sender());
         let checked = move_lang::check_program(parsed_program.map(|(p, _c)| p), sender);
         (sources, checked)
@@ -90,7 +104,7 @@ impl RootDatabase {
 
     fn parse_file(
         &self,
-        file_path: PathBuf,
+        file_path: Option<PathBuf>,
     ) -> (FilesSourceText, Result<(ast::Program, CommentMap), Errors>) {
         let mut errors = Errors::new();
 
@@ -114,9 +128,12 @@ impl RootDatabase {
         }
 
         let mut module_files: Vec<PathBuf> = self.module_files();
-        if !module_files.contains(&file_path) {
-            module_files.push(file_path);
+        if let Some(fp) = file_path {
+            if !module_files.contains(&fp) {
+                module_files.push(fp);
+            }
         }
+
         let mut source_definitions = Vec::new();
         let mut source_comments = CommentMap::new();
         for source_file_path in module_files {

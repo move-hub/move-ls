@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
+// @ts-ignore
+import * as which from 'which';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient';
 import { ExecuteCommandRequest } from 'vscode-languageclient';
@@ -156,8 +157,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const extensionConfig = loadConfig(folder);
-		const executable = (process.platform === 'win32') ? 'move-ls.exe' : 'move-ls';
+		const executable = (process.platform === 'win32') ? 'move-language-server.exe' : 'move-language-server';
 		let binaryPath = extensionConfig.languageServerPath || path.join(extensionPath, 'bin', executable);
+		if (!fs.existsSync(binaryPath)) {
+			let systemPath = which.sync(executable);
+			if (!systemPath) {
+				console.error('no move-language-server binary found');
+				return;
+			}
+			binaryPath = systemPath;
+		}
 
 		const lspExecutable: lsp.Executable = {
 			command: binaryPath,
