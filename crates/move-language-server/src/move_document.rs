@@ -52,6 +52,10 @@ impl RopeDoc {
         position_to_offset(&self.rope, pos)
     }
 
+    pub fn to_position(&self, offset: usize) -> Option<lsp_types::Position> {
+        offset_to_position(&self.rope, offset)
+    }
+
     /// Edit the do given the text range to edit, and the edited text.
     /// Return new end offset.
     pub fn edit<S: AsRef<str>>(&mut self, iv: Interval, text: S) -> usize {
@@ -198,6 +202,17 @@ pub fn position_to_offset(rope: &Rope, pos: lsp_types::Position) -> Option<usize
     Some(offset_of_line_start + offset)
 }
 
+pub fn offset_to_position(rope: &Rope, offset: usize) -> Option<lsp_types::Position> {
+    let line = rope.line_of_offset(offset);
+    let offset_of_line_start = rope.count_base_units::<LinesMetric>(line as usize);
+    let sub_rope = rope.slice(offset_of_line_start..offset);
+    let columns = sub_rope.count::<Utf16CodeUnitsMetric>(sub_rope.len());
+    Some(lsp_types::Position {
+        line: line as u64,
+        character: columns as u64,
+    })
+}
+
 pub fn offset_to_point(rope: &Rope, offset: usize) -> Point {
     let row = rope.line_of_offset(offset);
     let line_offset = rope.offset_of_line(row);
@@ -211,14 +226,6 @@ pub fn get_chunk(rope: &Rope, offset: usize) -> &str {
         &node[idx..]
     } else {
         ""
-    }
-}
-
-#[inline]
-fn position_to_point(p: lsp_types::Position) -> Point {
-    Point {
-        row: p.line as usize,
-        column: p.character as usize,
     }
 }
 
@@ -248,6 +255,7 @@ mod tests {
                 utf16_pos.iter().zip(text.char_indices())
             {
                 assert_eq!(position_to_offset(&rope, *pos), Some(expected_offset));
+                assert_eq!(offset_to_position(&rope, expected_offset), Some(*pos));
                 assert_eq!(&char, expected_char);
             }
 

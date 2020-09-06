@@ -1,13 +1,19 @@
 use crate::{
     config::ProjectConfig,
     error_diagnostic::{to_diagnostics, DiagnosticInfo},
-    move_document::MoveDocument,
-    salsa::{config_query::Config, text_source_query::SourceReader, RootDatabase},
+    move_document::{MoveDocument, RopeDoc},
+    salsa::{
+        config_query::Config,
+        move_ast_query::{Ast, AstInfo},
+        text_source_query::{SourceReader, TextSource},
+        RootDatabase,
+    },
     utils::find_move_file,
 };
 use anyhow::{bail, Result};
 use dashmap::DashMap;
 use futures::lock::Mutex;
+use itertools::Itertools;
 use move_core_types::account_address::AccountAddress;
 use move_lang::{
     errors::{Errors, FilesSourceText},
@@ -16,7 +22,11 @@ use move_lang::{
 use serde::{Deserialize, Serialize};
 use serde_json as json;
 use serde_json::Value;
-use std::{convert::TryFrom, path::PathBuf, str::FromStr};
+use std::{
+    convert::TryFrom,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 use tower_lsp::{
     jsonrpc, lsp_types,
     lsp_types::{
@@ -24,14 +34,14 @@ use tower_lsp::{
         ConfigurationItem, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
         DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesRegistrationOptions, DidCloseTextDocumentParams,
-        DidOpenTextDocumentParams, DidSaveTextDocumentParams, ExecuteCommandOptions,
-        ExecuteCommandParams, GotoDefinitionParams, GotoDefinitionResponse, InitializeParams,
-        InitializeResult, InitializedParams, Location, ProgressParams, ProgressParamsValue,
-        Registration, SaveOptions, ServerCapabilities, ServerInfo, TextDocumentItem,
-        TextDocumentPositionParams, TextDocumentSyncCapability, TextDocumentSyncKind,
-        TextDocumentSyncOptions, Unregistration, Url, WorkDoneProgress, WorkDoneProgressBegin,
-        WorkDoneProgressEnd, WorkDoneProgressOptions, WorkDoneProgressParams, WorkspaceCapability,
-        WorkspaceFolderCapability,
+        DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentFormattingParams,
+        ExecuteCommandOptions, ExecuteCommandParams, FormattingOptions, GotoDefinitionParams,
+        GotoDefinitionResponse, InitializeParams, InitializeResult, InitializedParams, Location,
+        ProgressParams, ProgressParamsValue, Registration, SaveOptions, ServerCapabilities,
+        ServerInfo, TextDocumentItem, TextDocumentPositionParams, TextDocumentSyncCapability,
+        TextDocumentSyncKind, TextDocumentSyncOptions, TextEdit, Unregistration, Url,
+        WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressOptions,
+        WorkDoneProgressParams, WorkspaceCapability, WorkspaceFolderCapability,
     },
     Client, LanguageServer,
 };
@@ -227,6 +237,32 @@ impl LanguageServer for MoveLanguageServer {
         Err(jsonrpc::Error::method_not_found())
     }
 
+    async fn formatting(
+        &self,
+        params: DocumentFormattingParams,
+    ) -> jsonrpc::Result<Option<Vec<TextEdit>>> {
+        let DocumentFormattingParams {
+            text_document,
+            options,
+            work_done_progress_params: _,
+        } = params;
+        let inner = self.inner.lock().await;
+
+        match inner.format_file(
+            text_document
+                .uri
+                .to_file_path()
+                .expect("url to be a file path")
+                .as_path(),
+            options,
+        ) {
+            Ok(s) => Ok(s.map(|t| vec![t])),
+            Err(e) => Err(jsonrpc::Error::invalid_params(format!(
+                "formatting failure: {}",
+                e
+            ))),
+        }
+    }
     // async fn goto_declaration(
     //     &self,
     //     params: GotoDeclarationParams,
@@ -308,6 +344,7 @@ impl Inner {
                         work_done_progress: Some(true),
                     },
                 }),
+                document_formatting_provider: Some(true),
                 ..ServerCapabilities::default()
             },
         })
@@ -587,6 +624,60 @@ impl Inner {
             }
         } else {
             Ok(())
+        }
+    }
+
+    fn format_file(&self, fp: &Path, format_opts: FormattingOptions) -> Result<Option<TextEdit>> {
+        let source: String = self.db.source_text(fp.to_path_buf());
+
+        match self.db.ast(fp.to_path_buf()) {
+            Ok(AstInfo {
+                defs,
+                doc_comments: _,
+                mut comment_map,
+                mut regular_comment_map,
+            }) => {
+                let def = match defs.first() {
+                    None => bail!("source code has no definitions"),
+                    Some(def) => def,
+                };
+                comment_map.append(&mut regular_comment_map);
+                let formatter = movei_fmt::Formatter::new(
+                    source.as_str(),
+                    comment_map,
+                    format_opts.tab_size as usize,
+                );
+                let doc = formatter.definition(def);
+                let output = movei_fmt::format(100 as isize, doc);
+
+                // trim empty lines
+                let mut output = output.lines().map(|l| l.trim_end()).join("\n");
+                if format_opts.insert_final_newline.unwrap_or(false) {
+                    output.push('\n');
+                }
+
+                let rope = RopeDoc::new(0, source.as_str());
+                let end_pos = rope.to_position(source.len());
+                if end_pos.is_none() {
+                    return Ok(None);
+                }
+                let text_edit = TextEdit::new(
+                    lsp_types::Range::new(lsp_types::Position::new(0, 0), end_pos.unwrap()),
+                    output,
+                );
+
+                Ok(Some(text_edit))
+            }
+            Err(errs) => {
+                let mut files = FilesSourceText::new();
+                let fname = self.db.leak_str(fp.to_path_buf());
+                files.insert(fname, source);
+                let error_buffer = move_lang::errors::report_errors_to_color_buffer(files, errs);
+                let err = anyhow::Error::msg(
+                    String::from_utf8_lossy(error_buffer.as_slice()).to_string(),
+                );
+                Err(err)
+            }
         }
     }
 }
