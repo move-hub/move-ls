@@ -120,7 +120,7 @@ impl RootDatabase {
                 Err(mut e) => {
                     errors.append(&mut e);
                 }
-                Ok((defs, _comments)) => {
+                Ok(AstInfo { defs, .. }) => {
                     lib_definitions.extend(defs);
                     // source_comments.insert(self.leak_str(dep.clone()), comments);
                 }
@@ -144,9 +144,11 @@ impl RootDatabase {
                 Err(mut e) => {
                     errors.append(&mut e);
                 }
-                Ok((defs, comments)) => {
+                Ok(AstInfo {
+                    defs, doc_comments, ..
+                }) => {
                     source_definitions.extend(defs);
-                    source_comments.insert(self.leak_str(source_file_path.clone()), comments);
+                    source_comments.insert(self.leak_str(source_file_path.clone()), doc_comments);
                 }
             }
         }
