@@ -257,10 +257,10 @@ impl LanguageServer for MoveLanguageServer {
             options,
         ) {
             Ok(s) => Ok(s.map(|t| vec![t])),
-            Err(e) => Err(jsonrpc::Error::invalid_params(format!(
-                "formatting failure: {}",
-                e
-            ))),
+            Err(e) => {
+                error!("formatting failure: {}", e);
+                Ok(None)
+            }
         }
     }
     // async fn goto_declaration(
