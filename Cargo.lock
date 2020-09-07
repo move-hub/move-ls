@@ -1327,8 +1327,8 @@ dependencies = [
 
 [[package]]
 name = "movei-fmt"
-version = "0.1.0"
-source = "git+https://github.com/move-hub/movei?tag=movei-fmt-v0.1.0#067939d9994940dc381e31ea62d5b17adfec3ffd"
+version = "0.1.1"
+source = "git+https://github.com/move-hub/movei?tag=movei-fmt-v0.1.1#be2241f9a0daa89ca5efac11b3770ec695aac862"
 dependencies = [
  "anyhow",
  "archery",
