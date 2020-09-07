@@ -5,10 +5,13 @@ use std::{convert::TryFrom, path::PathBuf};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectConfig {
+    #[serde(default)]
     pub stdlib_folder: Option<PathBuf>,
+    #[serde(default)]
     pub modules_folders: Vec<PathBuf>,
     #[serde(deserialize_with = "deserialize_address")]
     #[serde(serialize_with = "serialize_address")]
+    #[serde(default)]
     pub sender_address: Option<Address>,
 }
 
